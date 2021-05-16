@@ -43,6 +43,10 @@ func getNextId() int64 {
 	return lp.ID + 1
 }
 
+func UpdateProduct(id int64, p *Product) error {
+	return nil
+}
+
 var ProductsList = []*Product{
 	{
 		ID:          1,

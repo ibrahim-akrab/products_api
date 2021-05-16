@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/ibrahim-akrab/products_api/data"
 )
 
@@ -17,23 +19,11 @@ func NewProducts(l *log.Logger) *Products {
 }
 
 func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		p.getProducts(rw, r)
-		return
-	case http.MethodPost:
-		p.AddProduct(rw, r)
-		return
-	case http.MethodPut:
-		p.UpdateProduct(rw, r)
-		return
-	default:
-		rw.WriteHeader(http.StatusNotImplemented)
-	}
+	rw.WriteHeader(http.StatusNotImplemented)
 
 }
 
-func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
+func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 	pl := data.GetProducts()
 	err := pl.ToJSON(rw)
 	if err != nil {
@@ -59,4 +49,21 @@ func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
 
 func (p *Products) UpdateProduct(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle product update")
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	p.l.Println("Updating product with id: ", id)
+
+	product := &data.Product{}
+	err = product.FromJSON(r.Body)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// err = data.UpdateProduct(id, product)
+
 }

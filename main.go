@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/ibrahim-akrab/products_api/handlers"
 )
 
@@ -17,7 +18,16 @@ func main() {
 	gh := handlers.NewGoodbye(l)
 	ph := handlers.NewProducts(l)
 
-	sm := http.NewServeMux()
+	sm := mux.NewRouter()
+
+	getRouter := sm.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/products", ph.GetProducts)
+
+	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/products", ph.AddProduct)
+
+	putRouter := sm.Methods(http.MethodPut).Subrouter()
+	putRouter.HandleFunc("/products/{id:[0-9]+}", ph.UpdateProduct)
 	sm.Handle("/", hh)
 	sm.Handle("/goodbye", gh)
 	sm.Handle("/products", ph)
