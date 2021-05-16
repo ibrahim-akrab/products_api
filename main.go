@@ -25,9 +25,12 @@ func main() {
 
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/products", ph.AddProduct)
+	postRouter.Use(ph.MiddlewareProductValidation)
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/products/{id:[0-9]+}", ph.UpdateProduct)
+	putRouter.Use(ph.MiddlewareProductValidation)
+
 	sm.Handle("/", hh)
 	sm.Handle("/goodbye", gh)
 	sm.Handle("/products", ph)
@@ -45,6 +48,7 @@ func main() {
 		if err != nil {
 			l.Fatal(err)
 		}
+
 	}()
 
 	sigChan := make(chan os.Signal, 1)

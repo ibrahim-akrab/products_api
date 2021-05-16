@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -35,12 +36,7 @@ func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
 
 func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle product addition")
-	prod := &data.Product{}
-	err := prod.FromJSON(r.Body)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
+	prod := r.Context().Value(KeyProduct{}).(*data.Product)
 	data.AddProduct(prod)
 	d, _ := json.Marshal(prod)
 	rw.Write(d)
@@ -55,15 +51,25 @@ func (p *Products) UpdateProduct(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-	p.l.Println("Updating product with id: ", id)
-
-	product := &data.Product{}
-	err = product.FromJSON(r.Body)
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
-		return
-	}
+	product := r.Context().Value(KeyProduct{}).(*data.Product)
+	p.l.Println("Updating product with id: ", id, " with product: ", product)
 
 	// err = data.UpdateProduct(id, product)
 
+}
+
+type KeyProduct struct{}
+
+func (p Products) MiddlewareProductValidation(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		product := &data.Product{}
+		err := product.FromJSON(r.Body)
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		}
+		ctx := context.WithValue(r.Context(), KeyProduct{}, product)
+		req := r.WithContext(ctx)
+		next.ServeHTTP(rw, req)
+	})
 }
